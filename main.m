@@ -1,4 +1,5 @@
 %% EEG LAB - matlab code
+close all
 clear
 clc
 
@@ -19,18 +20,41 @@ T8 = data(:,10);
 FC6 = data(:,11);
 F4 = data(:,12);
 F8 = data(:,13);
-Af4 = data(:,14);
+AF4 = data(:,14);
 
-
-%
-
-fs = 128; % ???
-
+fs = 128; 
 Ts = 1/fs;
-
 Tmax = (length(data)-1)*Ts;
 
-pwe = pwelch(T8);
+electrodes = {AF3,F3,FC5,P7,O1,O2,P8,T8,FC6,F4,F8,AF4};
 
-plot(pwe)
+filtered_electrodes = cell(1,length(electrodes));
+
+BPF = fir1(1000,, );
+
+for i = 1:length(electrodes{1})
+    
+    filtered_electrodes{1} = filtfilt(BPF,1,electrodes{1});
+    
+end
+
+%% Plotting one of the electrodes
+figure(1)
+subplot(2,2,1)
+plot(electrodes{1})
+
+[pwe,f] = pwelch(electrodes{1},500,300,500,fs);
+
+subplot(2,2,3)
+plot(f,pwe)
+
+
+subplot(2,2,2)
+plot(filtered_electrodes{1})
+
+[pwe_f,f_f] = pwelch(filtered_electrodes{1},500,300,500,fs);
+
+subplot(2,2,4)
+plot(f_f,pwe_f)
+
 
