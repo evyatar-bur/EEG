@@ -22,116 +22,191 @@ F4 = data(:,12);
 F8 = data(:,13);
 AF4 = data(:,14);
 
+% Taking only the elctrodes that are yellow or green (less noise)
+electrodes = {AF3,F3,FC5,P7,O1,O2,T8,FC6,F4,F8};
+electrode_names = {'AF3','F3','FC5','P7','O1','O2','T8','FC6','F4','F8'};
+
+% Setting sample frequency and time vector
 fs = 128; 
 Ts = 1/fs;
 Tmax = (length(data)-1)*Ts;
 
 t = (0:Ts:Tmax)';
 
-electrodes = {AF3,F3,FC5,P7,O1,O2,T8,FC6,F4,F8};
 
-electrode_names = {'AF3','F3','FC5','P7','O1','O2','T8','FC6','F4','F8'};
-
+% Filtering signal with BPF (1-30 HZ)
 filtered_electrodes = cell(1,length(electrodes));
 
-BPF = fir1(1000,[1/64,30/64]);
+BPF = fir1(1000,[1/64,30/64],'bandpass');
 
 for i = 1:length(electrodes)
     
-    filtered_electrodes{i} = filter(BPF,1,electrodes{i});
+    filtered_electrodes{i} = filtfilt(BPF,1,electrodes{i});
     
 end
 
-%% Plotting one of the electrodes
-figure(1)
-subplot(2,2,1)
-plot(t,electrodes{1})
+%% Plotting one of the electrodes (AF3) - original signal and filtered signal
+for i = 1:length(electrodes)
 
-[pwe,f] = pwelch(electrodes{1},500,300,500,fs);
+    figure;
 
-subplot(2,2,3)
-plot(f,pwe)
-
-
-subplot(2,2,2)
-plot(t,filtered_electrodes{1})
-
-[pwe_f,f_f] = pwelch(filtered_electrodes{1},500,300,500,fs);
-
-subplot(2,2,4)
-plot(f_f,pwe_f)
+    % Plotting original signal - time domain
+    subplot(2,2,1)
+    plot(t,electrodes{i})
+    title('Original signal - time domain')
+    xlabel('Time [sec]')
+    ylabel('Voltage [\muV]')
 
 
-%%
+    % Computing and plotting power spectral density (PSD) estimation of original signal
 
+    subplot(2,2,3)
+    pwelch(electrodes{i},[],[],[],fs);
+    title('Original signal - frequency domain')
+
+
+    % Plotting filtered signal - time domain
+    subplot(2,2,2)
+    plot(t,filtered_electrodes{i})
+    title('filtered signal - time domain')
+    xlabel('Time [sec]')
+    ylabel('Voltage [\muV]')
+    
+    % Computing and plotting power spectral density (PSD) estimation of filtered signal
+
+    subplot(2,2,4)
+    pwelch(filtered_electrodes{i},[],[],[],fs);
+    title('filtered signal - frequency domain')
+
+    suptitle(['EEG signal before and after filtering - electrode ',electrode_names{i}])
+end
+%% Filtering signals to contain only the frequencies of each brain wave
+
+% The filtered signals will be used to determine which electrode we will use
+% to examine each one of the waves
+
+% Creating brain wave filters
 alpha_filter = fir1(1000,[7 12]/64);
 beta_filter = fir1(1000,[12 30]/64);
 delta_filter = fir1(1000,[0.5 4]/64);
 theta_filter = fir1(1000,[4 7]/64);
 
+% Preallocating cells for the signals
 electrodes_alpha = cell(1,length(electrodes));
 electrodes_beta = cell(1,length(electrodes));
 electrodes_delta = cell(1,length(electrodes));
 electrodes_theta = cell(1,length(electrodes));
 
+% Filtering the signals
 for i = 1:length(electrodes)
     
-    electrodes_alpha{i} = filter(alpha_filter,1,filtered_electrodes{i}(1:round(15*fs)));
-    electrodes_beta{i} = filter(beta_filter,1,filtered_electrodes{i}(1:round(15*fs)));
-    electrodes_delta{i} = filter(delta_filter,1,filtered_electrodes{i}(1:round(15*fs)));
-    electrodes_theta{i} = filter(theta_filter,1,filtered_electrodes{i}(1:round(15*fs)));
+    electrodes_alpha{i} = filtfilt(alpha_filter,1,filtered_electrodes{i});
+    electrodes_beta{i} = filtfilt(beta_filter,1,filtered_electrodes{i});
+    electrodes_delta{i} = filtfilt(delta_filter,1,filtered_electrodes{i});
+    electrodes_theta{i} = filtfilt(theta_filter,1,filtered_electrodes{i});
     
 end
 
-figure(2)
+% Creating plots showing the filtered signals in time domain and in
+% frequency domain
+
+% Alpha waves
+figure;
+for i = (1:10)
+    
+    subplot(2,5,i)
+    
+    plot(t(1:round(15*fs)),electrodes_alpha{i}(1:round(15*fs)));
+    title(electrode_names{i}) 
+    xlabel('Time [t]')
+    ylabel('Voltage [\muV]')
+end
+suptitle('Time domain - alpha frequencies')
+
+figure;
+for i = (1:10)
+    
+    subplot(2,5,i)
+    
+    pwelch(electrodes_alpha{i}(1:round(15*fs)),[],[],[],fs);
+    title(electrode_names{i})
+end
+suptitle('PSD - alpha frequencies')
+
+% Beta waves
+figure;
+for i = (1:10)
+    
+    subplot(2,5,i)
+    
+    plot(t(1:round(15*fs)),electrodes_beta{i}(1:round(15*fs)));
+    title(electrode_names{i}) 
+    xlabel('Time [t]')
+    ylabel('Voltage [\muV]')
+end
+suptitle('Time domain - beta frequencies')
+
+figure;
 
 for i = (1:10)
     
     subplot(2,5,i)
     
-    [pwe,f] = pwelch(electrodes_alpha{i},500,300,500,fs);
-    
-    plot(f,pwe)
-    title(['alpha - ' electrode_names{i}]) %O1
+    pwelch(electrodes_beta{i}(1:round(15*fs)),[],[],[],fs);
+    title(electrode_names{i})
 end
+suptitle('PSD - beta frequencies')
+
+% Delta waves
+
+figure;
+for i = (1:10)
+    
+    subplot(2,5,i)
+    
+    plot(t(1:round(15*fs)),electrodes_delta{i}(1:round(15*fs)));
+    title(electrode_names{i}) 
+    xlabel('Time [t]')
+    ylabel('Voltage [\muV]')
+end
+suptitle('Time domain - delta frequencies')
 
 
-figure(3)
+figure;
 
 for i = (1:10)
     
     subplot(2,5,i)
     
-    [pwe,f] = pwelch(electrodes_beta{i},500,300,500,fs);
-    
-    plot(f,pwe)
-    title(electrode_names{i})%FC6
+    pwelch(electrodes_delta{i}(1:round(15*fs)),[],[],[],fs);
+    title(electrode_names{i})
 end
+suptitle('PSD - delta frequencies')
 
-figure(4)
+% Theta waves
+
+figure;
+for i = (1:10)
+    
+    subplot(2,5,i)
+    
+    plot(t(1:round(15*fs)),electrodes_theta{i}(1:round(15*fs)));
+    title(electrode_names{i}) 
+    xlabel('Time [t]')
+    ylabel('Voltage [\muV]')
+end
+suptitle('Time domain - theta frequencies')
+
+figure;
 
 for i = (1:10)
     
     subplot(2,5,i)
     
-    [pwe,f] = pwelch(electrodes_delta{i},500,300,500,fs);
-    
-    plot(f,pwe)
-    title(electrode_names{i})%FC6
+    pwelch(electrodes_theta{i}(1:round(15*fs)),[],[],[],fs);
+    title(electrode_names{i})
 end
-
-figure(5)
-
-for i = (1:10)
-    
-    subplot(2,5,i)
-    
-    [pwe,f] = pwelch(electrodes_theta{i},500,300,500,fs);
-    
-    plot(f,pwe)
-    title(electrode_names{i}) %FC6
-end
-
+suptitle('PSD - theta frequencies')
 
 
 %% 3 
