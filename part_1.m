@@ -37,7 +37,7 @@ t = (0:Ts:Tmax)';
 % Filtering signal with BPF (1-30 HZ)
 filtered_electrodes = cell(1,length(electrodes));
 
-BPF = fir1(1000,[1/64,30/64],'bandpass');
+BPF = fir1(1000,[0.5/64,30/64],'bandpass');
 
 for i = 1:length(electrodes)
     
@@ -45,7 +45,7 @@ for i = 1:length(electrodes)
     
 end
 
-%% Plotting one of the electrodes (AF3) - original signal and filtered signal
+%% Plotting signals recorded from the electrodes - original signal and filtered signal
 for i = 1:length(electrodes)
 
     figure;
@@ -147,7 +147,6 @@ end
 suptitle('Time domain - beta frequencies')
 
 figure;
-
 for i = (1:10)
     
     subplot(2,5,i)
@@ -211,77 +210,149 @@ suptitle('PSD - theta frequencies')
 
 %% 3 
 
-alpha = filter(alpha_filter,1,filtered_electrodes{5});
-beta = filter(beta_filter,1,filtered_electrodes{8});
-delta = filter(delta_filter,1,filtered_electrodes{8});
-theta = filter(theta_filter,1,filtered_electrodes{8});
+alpha = filter(alpha_filter,1,filtered_electrodes{6}); % O2 electrode
+beta = filter(beta_filter,1,filtered_electrodes{5}); % O1 electrode
+delta = filter(delta_filter,1,filtered_electrodes{8}); % FC6 electrode
+theta = filter(theta_filter,1,filtered_electrodes{2}); % F3 electrode
 
-% Plotting segment 1 - open eyes
-figure()
-  
-seg1 = (1:round(15*fs)); % Segment 1 samples
+seg1 = (1:round(30*fs)); % Segment 1 samples
 
-subplot(4,1,1)    
-plot(t(seg1),alpha(seg1))
-    
-subplot(4,1,2)    
-plot(t(seg1),beta(seg1))
-
-subplot(4,1,3)    
-plot(t(seg1),delta(seg1))
-
-subplot(4,1,4)    
-plot(t(seg1),theta(seg1))
-
+% Computing STD of each wave in segment 1
 alpha_std_1 = std(alpha(seg1));
 beta_std_1 = std(beta(seg1));
 delta_std_1 = std(delta(seg1));
 theta_std_1 = std(theta(seg1));
 
+% Plotting the the different waves in time domain - segment 1
+figure;
 
-% Plotting segment 2 - closed eyes
-figure()
-  
-seg2 = (round(15*fs):round(30*fs)); % Segment 1 samples
-
-subplot(4,1,1)    
-plot(t(round(15*fs):round(30*fs)),alpha(round(15*fs):round(30*fs)))
+subplot(2,2,1)    
+plot(t(seg1),alpha(seg1))
+title('Alpha wave')
+xlabel('Time [sec]')
+ylabel('Voltage [\muV]')
     
-subplot(4,1,2)    
-plot(t(round(15*fs):round(30*fs)),beta(round(15*fs):round(30*fs)))
+subplot(2,2,2)    
+plot(t(seg1),beta(seg1))
+title('Beta wave')
+xlabel('Time [sec]')
+ylabel('Voltage [\muV]')
 
-subplot(4,1,3)    
-plot(t(round(15*fs):round(30*fs)),delta(round(15*fs):round(30*fs)))
+subplot(2,2,3)    
+plot(t(seg1),delta(seg1))
+title('Delta wave')
+xlabel('Time [sec]')
+ylabel('Voltage [\muV]')
 
-subplot(4,1,4)    
-plot(t(round(15*fs):round(30*fs)),theta(round(15*fs):round(30*fs)))
+subplot(2,2,4)    
+plot(t(seg1),theta(seg1))
+title('Theta wave')
+xlabel('Time [sec]')
+ylabel('Voltage [\muV]')
 
+suptitle({'The different waves in time domain';'segment 1 - open eyes'})
+
+
+% Plotting the the different waves in frequency domain - segment 1
+figure;
+subplot(2,2,1)    
+pwelch(alpha(seg1),[],[],[],fs);
+title('Alpha wave')
+    
+subplot(2,2,2)    
+pwelch(beta(seg1),[],[],[],fs);
+title('Beta wave')
+
+subplot(2,2,3)    
+pwelch(delta(seg1),[],[],[],fs);
+title('Delta wave')
+
+
+subplot(2,2,4)    
+pwelch(theta(seg1),[],[],[],fs);
+title('Theta wave')
+
+
+suptitle({'The different waves in frequency domain';'segment 1 - open eyes'})
+
+% Segment 2 - closed eyes
+
+seg2 = (round(30*fs):round(60*fs)); % Segment 2 samples
+
+% Computing STD of each wave in segment 2
 alpha_std_2 = std(alpha(seg2));
 beta_std_2 = std(beta(seg2));
 delta_std_2 = std(delta(seg2));
 theta_std_2 = std(theta(seg2));
 
-% Plotting segment 3 - open eyes again
-figure()
-  
-seg3 = (round(30*fs):round(45*fs));
+% Plotting the the different waves in time domain - segment 1
+figure;
 
-subplot(4,1,1)    
-plot(t(round(30*fs):round(45*fs)),alpha(round(30*fs):round(45*fs)))
+subplot(2,2,1)    
+plot(t(seg2),alpha(seg2))
+title('Alpha wave')
+xlabel('Time [sec]')
+ylabel('Voltage [\muV]')
     
-subplot(4,1,2)    
-plot(t(round(30*fs):round(45*fs)),beta(round(30*fs):round(45*fs)))
+subplot(2,2,2)    
+plot(t(seg2),beta(seg2))
+title('Beta wave')
+xlabel('Time [sec]')
+ylabel('Voltage [\muV]')
 
-subplot(4,1,3)    
-plot(t(round(30*fs):round(45*fs)),delta(round(30*fs):round(45*fs)))
+subplot(2,2,3)    
+plot(t(seg2),delta(seg2))
+title('Delta wave')
+xlabel('Time [sec]')
+ylabel('Voltage [\muV]')
 
-subplot(4,1,4)    
-plot(t(round(30*fs):round(45*fs)),theta(round(30*fs):round(45*fs)))
+subplot(2,2,4)    
+plot(t(seg2),theta(seg2))
+title('Theta wave')
+xlabel('Time [sec]')
+ylabel('Voltage [\muV]')
+
+suptitle({'The different waves in time domain';'segment 2 - closed eyes'})
 
 
-alpha_std_3 = std(alpha(seg3));
-beta_std_3 = std(beta(seg3));
-delta_std_3 = std(delta(seg3));
-theta_std_3 = std(theta(seg3));
+% Plotting the the different waves in frequency domain - segment 1
+figure;
+subplot(2,2,1)    
+pwelch(alpha(seg2),[],[],[],fs);
+title('Alpha wave')
+    
+subplot(2,2,2)    
+pwelch(beta(seg2),[],[],[],fs);
+title('Beta wave')
 
-%%
+subplot(2,2,3)    
+pwelch(delta(seg2),[],[],[],fs);
+title('Delta wave')     
+
+subplot(2,2,4)    
+pwelch(theta(seg2),[],[],[],fs);
+title('Theta wave')
+
+suptitle({'The different waves in frequency domain';'segment 2 - closed eyes'})
+
+
+%% Part 2
+
+% Loading data from .txt file
+data = dlmread('partIII_Group10.txt');
+
+fs = 128; % Hz
+len = length(data_2); % Samples
+T = len/fs; % Sec
+
+P = cell(14,14);
+
+for i = 1:14
+    for j = 1:14
+        
+        P{i,j} =  data(i)-data(j);
+        
+    end
+end
+        
+
